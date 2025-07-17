@@ -26,16 +26,16 @@
           </div>
         </router-link>
         
-        <!-- 哄哄模拟器卡片 -->
-        <router-link class="card card-love" to="/honghong">
+        <!-- 谈判专家模拟器卡片 -->
+        <router-link class="card card-negotiator" to="/negotiator">
           <div class="card-icon">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3a2 2 0 110 4 2 2 0 010-4zm0 14c-2.67 0-8 1.34-8-2V17c0-2.67 5.33-4 8-4s8 1.33 8 4v0c0 3.34-5.33 2-8 2z"/>
             </svg>
           </div>
           <div class="card-content">
-            <h3>哄哄模拟器</h3>
-            <p>情感互动小游戏，化解甜蜜烦恼</p>
+            <h3>谈判专家模拟器</h3>
+            <p>心理博弈小游戏，扮演谈判专家解救人质，体验AI对抗！</p>
           </div>
         </router-link>
         
@@ -187,7 +187,7 @@ export default {
 }
 
 .card-chat::before { background: linear-gradient(90deg, #42b883, #347474); }
-.card-love::before { background: linear-gradient(90deg, #ff6b6b, #ff8e8e); }
+.card-negotiator::before { background: linear-gradient(90deg, #f6c342, #2c3e50); }
 .card-plan::before { background: linear-gradient(90deg, #4dabf7, #339af0); }
 .card-pdf::before { background: linear-gradient(90deg, #9c36b5, #cc5de8); }
 
@@ -205,7 +205,7 @@ export default {
 }
 
 .card-chat .card-icon svg { fill: #42b883; }
-.card-love .card-icon svg { fill: #ff6b6b; }
+.card-negotiator .card-icon svg { fill: #f6c342; }
 .card-plan .card-icon svg { fill: #4dabf7; }
 .card-pdf .card-icon svg { fill: #9c36b5; }
 
