@@ -38,11 +38,19 @@
                     {{ (isThinking && idx === currentMessages.length - 1 && loading) ? '思考中' : '思考过程' }}
                     <span v-if="isThinking && idx === currentMessages.length - 1 && loading" class="thinking-dot"></span>
                   </div>
-                  <div v-show="thinkStates[idx]" class="ai-think-content">{{ msg.think }}</div>
+                  <!-- 默认展开思考内容 -->
+                  <div v-show="thinkStates[idx] !== false" class="ai-think-content">{{ msg.think }}</div>
+                </div>
+                
+                <!-- 加载动画，当这是最后一条消息且正在加载时显示 -->
+                <div v-if="loading && idx === currentMessages.length - 1 && !msg.text && !msg.think" class="loading-dots">
+                  <span class="dot"></span>
+                  <span class="dot"></span>
+                  <span class="dot"></span>
                 </div>
                 
                 <!-- 最终回复部分 -->
-                <div class="ai-response">{{ msg.text }}</div>
+                <div v-if="msg.text" class="ai-response">{{ msg.text }}</div>
               </template>
             </div>
           </div>
@@ -76,7 +84,7 @@ export default {
     const thinkStates = ref({})
     const isThinking = ref(false)
     const thinkingContent = ref('')
-    const showThinkingContent = ref(true)
+    const showThinkingContent = ref(true) // 思考内容默认展开
 const isThinkingComplete = ref(false)
     const currentMessages = ref([])
     
@@ -147,11 +155,11 @@ const isThinkingComplete = ref(false)
       // 如果是当前会话，更新currentMessages
       if (chatId === currentChatId.value) {
         currentMessages.value = messages
-        // 为有思考过程的消息设置默认展开状态
+                  // 为有思考过程的消息设置默认展开状态
         const thinkStatesForChat = {}
         messages.forEach((msg, idx) => {
           if (msg.think) {
-            thinkStatesForChat[idx] = true
+            thinkStatesForChat[idx] = true // 默认展开
           }
         })
         sessionThinkStates.value[chatId] = thinkStatesForChat
@@ -211,25 +219,34 @@ const isThinkingComplete = ref(false)
       if (!input.value.trim() || loading.value) return
       
       const chatId = currentChatId.value
+      // 确保 chatId 存在，如果不存在则生成一个新的
+      if (!chatId) {
+        const newId = genId()
+        currentChatId.value = newId
+        chatList.value.unshift({ chatId: newId, summary: '' })
+        sessionMessages.value[newId] = []
+        // 后端会在首次发送消息时自动保存chatId
+      }
+      
       const prompt = input.value
       input.value = ''
       // 设置当前会话为加载状态
-      sessionLoading.value[chatId] = true
+      sessionLoading.value[currentChatId.value] = true
       loading.value = true
       
       // 获取当前会话的消息列表
-      let messages = sessionMessages.value[chatId] || []
+      let messages = sessionMessages.value[currentChatId.value] || []
       
       // 先添加用户消息到界面
       messages.push({ role: 'user', text: prompt })
-      sessionMessages.value[chatId] = messages
+      sessionMessages.value[currentChatId.value] = messages
       
       // 立即创建一个空的AI消息，显示"AI："，避免卡顿感
       messages.push({ role: 'ai', text: '', think: '' })
-      sessionMessages.value[chatId] = messages
+      sessionMessages.value[currentChatId.value] = messages
       
       // 如果是当前会话，更新currentMessages
-      if (chatId === currentChatId.value) {
+      if (currentChatId.value === currentChatId.value) {
         currentMessages.value = messages
         // 滚动到底部
         scrollToBottom()
@@ -237,14 +254,14 @@ const isThinkingComplete = ref(false)
       
       // 如果是第一条消息，更新会话标题
       if (messages.length === 2) { // 用户消息 + AI消息
-        const currentChat = chatList.value.find(c => c.chatId === chatId)
+        const currentChat = chatList.value.find(c => c.chatId === currentChatId.value)
         if (currentChat) {
           currentChat.summary = prompt.slice(0, 20) + (prompt.length > 20 ? '...' : '')
         }
       }
       
       // 后台处理AI回复
-      processAIResponse(chatId, prompt, messages)
+      processAIResponse(currentChatId.value, prompt, messages)
     }
 
     // 后台处理AI回复
@@ -266,7 +283,7 @@ const isThinkingComplete = ref(false)
         // 使用已经创建的AI消息（最后一个消息）
         const tempMsgIdx = messages.length -1
         // 默认展开思考过程
-        sessionThinkStates.value[chatId][tempMsgIdx] = true
+        sessionThinkStates.value[chatId][tempMsgIdx] = true // 确保思考过程默认展开
         
         // 如果是当前会话，更新currentMessages
         if (chatId === currentChatId.value) {
@@ -373,7 +390,7 @@ const isThinkingComplete = ref(false)
         sessionMessages.value[chatId] = [...messages]
         if (thinkContent) {
           // 默认展开思考过程
-          sessionThinkStates.value[chatId][tempMsgIdx] = true
+          sessionThinkStates.value[chatId][tempMsgIdx] = true // 确保思考过程默认展开
         }
         
         // 如果是当前会话，更新currentMessages
@@ -417,6 +434,10 @@ const isThinkingComplete = ref(false)
       const chatId = currentChatId.value
       if (!sessionThinkStates.value[chatId]) {
         sessionThinkStates.value[chatId] = {}
+      }
+      // 如果未设置，则默认为true（展开状态）
+      if (sessionThinkStates.value[chatId][idx] === undefined) {
+        sessionThinkStates.value[chatId][idx] = true
       }
       sessionThinkStates.value[chatId][idx] = !sessionThinkStates.value[chatId][idx]
       thinkStates.value = sessionThinkStates.value[chatId]
@@ -811,5 +832,49 @@ body.dark .ai-response {
   0% { transform: scale(1); opacity: 1; }
   50% { transform: scale(0.6); opacity: 0.6; }
   100% { transform: scale(1); opacity: 1; }
+}
+
+/* 加载动画样式 */
+.loading-dots {
+  display: inline-flex;
+  align-items: center;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+  max-width: 80px;
+}
+
+body.dark .loading-dots {
+  background-color: #1a2633;
+}
+
+.loading-dots .dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: #e67e22;
+  margin: 0 4px;
+  animation: bounce 1.4s infinite ease-in-out both;
+}
+
+.loading-dots .dot:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.loading-dots .dot:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+@keyframes bounce {
+  0%, 80%, 100% { 
+    transform: scale(0);
+    opacity: 0.6;
+  }
+  40% { 
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 </style>

@@ -5,13 +5,29 @@ spring:
     ollama:
       base-url: http://localhost:11434
       chat:
-        model: deepseek-r1:latest
+        options:
+          model: deepseek-r1:latest
+          temperature: 0.8
+          num-ctx: 4096
+          num-g-p-u: -1
+      embedding:
+        options:
+          model: nomic-embed-text:latest
+    vectorstore:
+      redis:
+        prefix: "embedding"
+        initialize-schema: true
+        index: "spring-ai-index"
     openai:
       api-key: ${OPENAI_API_KEY}
       base-url: https://dashscope.aliyuncs.com/compatible-mode
       chat:
         options:
           model: qwen-max-latest
+  data:
+    redis:
+      host: 47.111.77.235
+      port: 6380
 
 logging:
   level:
